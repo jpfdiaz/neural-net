@@ -1,6 +1,12 @@
 #include <vector>
 #include <string>
-#include "Network.hpp"
+
+struct Network {
+    std::vector<int> topology;
+    std::vector<float> weights;
+    std::vector<float> neurons; // Allocates once -> 2 * max(topology);
+    std::vector<std::string> activations; // One per layer but the input -> topology.length() - 1;
+};
 
 Network* createNN(const std::vector<int> &layers);
 Network* clone(Network* net);
