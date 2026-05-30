@@ -1,2 +1,15 @@
 PLAN.md
 .vscode/
+
+# Build trees
+build/
+bin/
+
+# Coverage artifacts
+*.gcda
+*.gcno
+*.gcov
+coverage/
+
+# Demos
+demos/

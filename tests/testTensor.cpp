@@ -69,6 +69,21 @@ TEST_CASE("forward output size matches last layer") {
     destroy(net);
 }
 
+TEST_CASE("forward produces known values with manual weights") {
+    // topology {2,2,1}, relu, no biases
+    // layer 1: [[0.5, 0.5], [0.5, 0.5]]  → hidden = {1.0, 1.0}
+    // layer 2: [[1.0, 1.0]]              → output = {2.0}
+    Network* net = createNN({2, 2, 1});
+    setActivation(net, 1, "relu");
+    setActivation(net, 2, "relu");
+    setWeights(net, 1, {0.5f, 0.5f, 0.5f, 0.5f});
+    setWeights(net, 2, {1.0f, 1.0f});
+    auto out = forward(net, {1.0f, 1.0f});
+    CHECK(out.size() == 1);
+    CHECK(out[0] == doctest::Approx(2.0f));
+    destroy(net);
+}
+
 TEST_CASE("forward is deterministic") {
     Network* net = createNN({3, 4, 1});
     std::vector<float> input = {0.1f, 0.5f, 0.9f};
