@@ -84,6 +84,18 @@ TEST_CASE("forward produces known values with manual weights") {
     destroy(net);
 }
 
+TEST_CASE("forward applies bias correctly") {
+    // topology {1,1}: single weight w=0, bias b=3.0 → relu(0*input + 3) = 3
+    Network* net = createNN({1, 1});
+    setActivation(net, 1, "relu");
+    // layer 1 params: [weight, bias]
+    setWeights(net, 1, {0.0f, 3.0f});
+    auto out = forward(net, {99.0f});
+    CHECK(out.size() == 1);
+    CHECK(out[0] == doctest::Approx(3.0f));
+    destroy(net);
+}
+
 TEST_CASE("forward is deterministic") {
     Network* net = createNN({3, 4, 1});
     std::vector<float> input = {0.1f, 0.5f, 0.9f};

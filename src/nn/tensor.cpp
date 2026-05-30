@@ -5,15 +5,14 @@
 #include <random>
 
 // Layout per layer i:
-//   i == 0: topology[0] bias placeholders (stored, unused in forward)
+//   i == 0: topology[0] placeholders (input layer, unused in forward)
 //   i  > 0: topology[i-1]*topology[i] connection weights, then topology[i] biases
 static int layerOffset(const Network* net, int layerIdx) {
     if (layerIdx == 0) return 0;
 
     int offset = net->topology[0];
-    for (int i = 1; i < layerIdx; ++i) {
-        offset += net->topology[i-1] * net->topology[i];
-    }
+    for (int i = 1; i < layerIdx; ++i)
+        offset += net->topology[i-1] * net->topology[i] + net->topology[i];
 
     return offset;
 }
@@ -21,7 +20,7 @@ static int layerOffset(const Network* net, int layerIdx) {
 static int layerParamCount(const Network* net, int layerIdx) {
     if (layerIdx == 0) return net->topology[0];
 
-    return net->topology[layerIdx-1] * net->topology[layerIdx];
+    return net->topology[layerIdx-1] * net->topology[layerIdx] + net->topology[layerIdx];
 }
 
 static float applyActivation(float x, const std::string& act) {
@@ -37,9 +36,8 @@ Network* createNN(const std::vector<int>& layers) {
     net->topology = layers;
 
     int total = layers[0];
-    for (int i = 1; i < (int)layers.size(); ++i) {
-        total += layers[i-1] * layers[i];
-    }
+    for (int i = 1; i < (int)layers.size(); ++i)
+        total += layers[i-1] * layers[i] + layers[i];
     net->weights.resize(total, 0.0f);
 
     std::mt19937 rng(std::random_device{}());
@@ -98,11 +96,11 @@ std::vector<float> forward(Network* net, const std::vector<float>& input) {
         int offset = layerOffset(net, i);
         std::vector<float> next(outSize);
 
+        int connCount = inSize * outSize;
         for (int j = 0; j < outSize; ++j) {
-            float sum = 0.0f;
-            for (int k = 0; k < inSize; ++k) {
+            float sum = net->weights[offset + connCount + j]; // bias
+            for (int k = 0; k < inSize; ++k)
                 sum += net->weights[offset + j * inSize + k] * current[k];
-            }
             next[j] = applyActivation(sum, net->activations[i]);
         }
 
